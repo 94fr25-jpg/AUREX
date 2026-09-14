@@ -1,0 +1,10 @@
+{
+  "appId": "com.aurex.controlgastos",
+  "appName": "Aurex",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true
+  }
+}
