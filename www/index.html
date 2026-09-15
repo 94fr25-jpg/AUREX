@@ -1845,23 +1845,50 @@ function downloadReceipt(){
     btn.textContent="Guardando...";
   }
 
-  // Regenera la imagen en el instante exacto de la descarga.
+  // Regenera la imagen justo al guardar para conservar fecha/hora real.
   currentReceiptDataUrl=generateReceiptImage(h);
   if($("receiptImage"))$("receiptImage").src=currentReceiptDataUrl;
   if($("receiptImageDone"))$("receiptImageDone").src=currentReceiptDataUrl;
 
   var filename=nextDownloadFilename(h);
-  var a=document.createElement("a");
-  a.href=currentReceiptDataUrl;
-  a.download=filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
 
-  // Pequeño retardo visual para que el guardado se sienta intencional.
-  setTimeout(function(){
-    showReceiptSavedEffect(filename);
-  },650);
+  try{
+    // APK Android: guardado NATIVO real en Descargas/Aurex.
+    if(window.AurexAndroid && typeof window.AurexAndroid.saveImage==="function"){
+      var result=String(window.AurexAndroid.saveImage(currentReceiptDataUrl,filename)||"");
+
+      if(result.indexOf("OK|")===0){
+        var savedPath=result.substring(3) || ("Descargas/Aurex/"+filename);
+        setTimeout(function(){
+          showReceiptSavedEffect(savedPath);
+          toast("Guardado en Descargas/Aurex");
+        },450);
+        return;
+      }
+
+      throw new Error(result||"Android no devolvió una ruta de guardado");
+    }
+
+    // Navegador: mantiene el método tradicional.
+    var a=document.createElement("a");
+    a.href=currentReceiptDataUrl;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(function(){
+      showReceiptSavedEffect(filename);
+    },650);
+
+  }catch(err){
+    console.error("Aurex save receipt:",err);
+    if(btn){
+      btn.classList.remove("saving","saved");
+      btn.textContent="Guardar imagen";
+    }
+    toast("No se pudo guardar el comprobante");
+  }
 }
 function shareReceipt(){
   if(!receiptGenerated){toast("Primero genera el comprobante");return}
